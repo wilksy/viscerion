@@ -116,5 +116,9 @@
             android:authorities="${applicationId}"
             android:name=".providers.ViscerionSliceProvider"
             android:exported="true"/>
+
+        <provider
+            android:authorities="${applicationId}.prefs_provider"
+            android:name=".providers.MultiprocessSharedPreferencesProvider" />
     </application>
 </manifest>

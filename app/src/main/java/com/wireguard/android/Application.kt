@@ -12,6 +12,8 @@ import android.app.NotificationChannel
 import android.app.NotificationManager
 import android.content.Intent
 import android.os.Build
+import android.os.Handler
+import android.os.Looper
 import android.os.StrictMode
 import androidx.annotation.RequiresApi
 import androidx.core.content.getSystemService
@@ -94,6 +96,8 @@ class Application : android.app.Application() {
 
     companion object {
         private lateinit var weakSelf: WeakReference<Application>
+
+        val APP_PROCESS_HANDLER = Handler(Looper.getMainLooper())
 
         fun get(): Application {
             return requireNotNull(weakSelf.get())
