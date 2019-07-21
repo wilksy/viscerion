@@ -86,7 +86,9 @@
             </intent-filter>
         </receiver>
 
-        <service android:name=".services.TaskerIntegrationService" />
+        <service
+            android:name=".services.TaskerIntegrationService"
+            android:process=":viscerion" />
 
         <service
             android:name=".backend.GoBackend$VpnService"
