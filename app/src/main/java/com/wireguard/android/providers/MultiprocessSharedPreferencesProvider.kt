@@ -3,6 +3,7 @@
  * Copyright © 2018-2019 Harsh Shandilya <msfjarvis@gmail.com>. All Rights Reserved.
  * SPDX-License-Identifier: Apache-2.0
  */
+@file:Suppress("DEPRECATION", "UNCHECKED_CAST") // androidx.preference hides a method that we need here.
 package com.wireguard.android.providers
 
 import android.app.Activity
@@ -76,11 +77,11 @@ class MultiprocessSharedPreferencesProvider : ContentProvider() {
                 for (key in map.keys) {
                     val row = c.newRow()
                     row.add(key)
-                    val `val` = map[key]
-                    if (`val` is Set<*>) {
-                        row.add(marshallSet((`val` as Set<String>?)!!))
+                    val columnValue = map[key]
+                    if (columnValue is Set<*>) {
+                        row.add(marshallSet((columnValue as Set<String>?)!!))
                     } else {
-                        row.add(`val`)
+                        row.add(columnValue)
                     }
                 }
             }
@@ -92,17 +93,17 @@ class MultiprocessSharedPreferencesProvider : ContentProvider() {
                     c = MatrixCursor(PROJECTION)
                     val row = c.newRow()
                     row.add(key)
-                    val `val` = map[key]
-                    if (`val` is Set<*>) {
-                        row.add(marshallSet(`val` as Set<String>))
+                    val columnValue = map[key]
+                    if (columnValue is Set<*>) {
+                        row.add(marshallSet(columnValue as Set<String>))
                     } else {
-                        row.add(`val`)
+                        row.add(columnValue)
                     }
                 }
             }
         }
 
-        c?.setNotificationUri(mContext!!.contentResolver, uri)
+        c?.setNotificationUri(context?.contentResolver, uri)
         return c
     }
 
@@ -211,7 +212,7 @@ class MultiprocessSharedPreferencesProvider : ContentProvider() {
     }
 
     private fun notifyChange(uri: Uri) {
-        mContext!!.contentResolver.notifyChange(uri, null)
+        context?.contentResolver?.notifyChange(uri, null)
     }
 
     class Pref(private val context: Context?, val sharedPreferencesName: String) : SharedPreferences {
@@ -236,48 +237,48 @@ class MultiprocessSharedPreferencesProvider : ContentProvider() {
 
         private class MultiProcessEditor(private val context: Context?, private val mPreferencesFileName: String) : SharedPreferences.Editor {
             private val mValues: MutableList<Pair<String, Any>>
-            private val mRemovedEntries: MutableSet<String>
+            private val removedEntries: MutableSet<String>
             private var mClearAllFlag: Boolean = false
 
             init {
                 mValues = ArrayList()
-                mRemovedEntries = HashSet()
+                removedEntries = HashSet()
                 mClearAllFlag = false
             }
 
             override fun putString(key: String, value: String?): SharedPreferences.Editor {
                 mValues.add(Pair(key, value))
-                mRemovedEntries.remove(key)
+                removedEntries.remove(key)
                 return this
             }
 
             override fun putStringSet(key: String, values: Set<String>?): SharedPreferences.Editor {
                 mValues.add(Pair(key, values))
-                mRemovedEntries.remove(key)
+                removedEntries.remove(key)
                 return this
             }
 
             override fun putInt(key: String, value: Int): SharedPreferences.Editor {
                 mValues.add(Pair(key, value))
-                mRemovedEntries.remove(key)
+                removedEntries.remove(key)
                 return this
             }
 
             override fun putLong(key: String, value: Long): SharedPreferences.Editor {
                 mValues.add(Pair(key, value))
-                mRemovedEntries.remove(key)
+                removedEntries.remove(key)
                 return this
             }
 
             override fun putFloat(key: String, value: Float): SharedPreferences.Editor {
                 mValues.add(Pair(key, value))
-                mRemovedEntries.remove(key)
+                removedEntries.remove(key)
                 return this
             }
 
             override fun putBoolean(key: String, value: Boolean): SharedPreferences.Editor {
                 mValues.add(Pair(key, value))
-                mRemovedEntries.remove(key)
+                removedEntries.remove(key)
                 return this
             }
 
@@ -289,13 +290,13 @@ class MultiprocessSharedPreferencesProvider : ContentProvider() {
                         break
                     }
                 }
-                mRemovedEntries.add(key)
+                removedEntries.add(key)
                 return this
             }
 
             override fun clear(): SharedPreferences.Editor {
                 mClearAllFlag = true
-                mRemovedEntries.clear()
+                removedEntries.clear()
                 mValues.clear()
                 return this
             }
@@ -313,19 +314,18 @@ class MultiprocessSharedPreferencesProvider : ContentProvider() {
                         val uri = resolveUri(v.first, mPreferencesFileName)
                         values.put(FIELD_KEY, v.first)
                         when {
-                            v.second is Boolean -> values.put(FIELD_VALUE, v.second as Boolean?)
-                            v.second is Long -> values.put(FIELD_VALUE, v.second as Long?)
-                            v.second is Int -> values.put(FIELD_VALUE, v.second as Int?)
-                            v.second is Float -> values.put(FIELD_VALUE, v.second as Float?)
-                            v.second is String -> values.put(FIELD_VALUE, v.second as String?)
-                            v.second is Set<*> -> values.put(FIELD_VALUE, marshallSet((v.second as Set<String>?)!!))
+                            v.second is Boolean -> values.put(FIELD_VALUE, v.second as Boolean)
+                            v.second is Long -> values.put(FIELD_VALUE, v.second as Long)
+                            v.second is Int -> values.put(FIELD_VALUE, v.second as Int)
+                            v.second is Float -> values.put(FIELD_VALUE, v.second as Float)
+                            v.second is String -> values.put(FIELD_VALUE, v.second as String)
+                            v.second is Set<*> -> values.put(FIELD_VALUE, marshallSet((v.second as Set<String>)))
                             else -> return false
                         }
-
                         context?.contentResolver?.update(uri, values, null, null)
                     }
 
-                    for (key in mRemovedEntries) {
+                    for (key in removedEntries) {
                         val uri = resolveUri(key, mPreferencesFileName)
                         context?.contentResolver?.delete(uri, null, null)
                     }
@@ -352,7 +352,7 @@ class MultiprocessSharedPreferencesProvider : ContentProvider() {
         @Override
         protected fun finalize() {
             if (isObserving) {
-                context!!.contentResolver.unregisterContentObserver(observer)
+                context?.contentResolver?.unregisterContentObserver(observer)
                 isObserving = false
             }
         }
@@ -361,7 +361,7 @@ class MultiprocessSharedPreferencesProvider : ContentProvider() {
             val values = ArrayMap<String, Any>()
 
             try {
-                context!!.contentResolver.query(
+                context?.contentResolver?.query(
                         resolveUri(null, sharedPreferencesName), PROJECTION, null, null, null).use { c ->
                     while (c != null && c.moveToNext()) {
                         val key = c.getString(c.getColumnIndexOrThrow(FIELD_KEY))
@@ -374,7 +374,7 @@ class MultiprocessSharedPreferencesProvider : ContentProvider() {
                         } else if (type == Cursor.FIELD_TYPE_STRING) {
                             val v = c.getString(c.getColumnIndexOrThrow(FIELD_VALUE))
                             if (v == "true" || v == "false") {
-                                value = java.lang.Boolean.parseBoolean(v)
+                                value = v.toBoolean()
                             } else {
                                 try {
                                     value = unmarshallSet(v)
@@ -537,17 +537,15 @@ class MultiprocessSharedPreferencesProvider : ContentProvider() {
         private const val PREFERENCES_DATA = 1
         private const val PREFERENCES_DATA_ID = 2
 
-        private val urlMatcher = UriMatcher(UriMatcher.NO_MATCH)
-
-        init {
-            urlMatcher.addURI(
-                    AUTHORITY,
+        private val urlMatcher = UriMatcher(UriMatcher.NO_MATCH).apply {
+            addURI(AUTHORITY,
                     "$PREFERENCES_ENTITY/*/$PREFERENCE_ENTITY",
-                    PREFERENCES_DATA)
-            urlMatcher.addURI(
-                    AUTHORITY,
+                    PREFERENCES_DATA
+            )
+            addURI(AUTHORITY,
                     "$PREFERENCES_ENTITY/*/$PREFERENCE_ENTITY/*",
-                    PREFERENCES_DATA_ID)
+                    PREFERENCES_DATA_ID
+            )
         }
 
         private const val FIELD_KEY = "key"
