@@ -7,7 +7,7 @@ package com.wireguard.android.util
 
 import android.content.Context
 import android.content.SharedPreferences
-import androidx.preference.PreferenceManager
+import com.wireguard.android.providers.MultiprocessSharedPreferencesProvider
 import kotlin.reflect.KProperty
 
 class ApplicationPreferences(val context: Context) : SharedPreferences.OnSharedPreferenceChangeListener {
@@ -15,7 +15,7 @@ class ApplicationPreferences(val context: Context) : SharedPreferences.OnSharedP
     private val onChangeMap: MutableMap<String, () -> Unit> = HashMap()
     private val onChangeListeners: MutableMap<String, MutableSet<OnPreferenceChangeListener>> = HashMap()
     private var onChangeCallback: ApplicationPreferencesChangeCallback? = null
-    val sharedPrefs: SharedPreferences = PreferenceManager.getDefaultSharedPreferences(context)
+    val sharedPrefs = requireNotNull(MultiprocessSharedPreferencesProvider.getDefaultSharedPreferences(context))
 
     private val doNothing = { }
     private val restart = { restart() }
